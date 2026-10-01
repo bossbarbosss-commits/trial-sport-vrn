@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Триал-Спорт — график работы</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f4f5f7;color:#17181a;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+.wrap{max-width:1250px;margin:auto;padding:20px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;margin-bottom:20px}
+h1{font-size:29px;line-height:1.15;margin:0 0 6px}
+.date{color:#777;font-size:14px}
+button{border:1px solid #ddd;background:#fff;border-radius:12px;padding:11px 15px;font-weight:600}
+.days{display:grid;grid-template-columns:.82fr 1.36fr .82fr;gap:14px;margin-bottom:20px}
+.day-card{background:#fff;border:1px solid #ddd;border-radius:18px;padding:19px;min-height:180px}
+.day-card.side{opacity:.48;min-height:135px;padding:13px}
+.day-card.side .name{font-size:12px;padding:6px 8px}
+.day-card.side .day-date{font-size:13px;margin:4px 0 10px}
+.day-card.side .kicker{font-size:11px}
+.day-card.side .count{font-size:11px;margin-top:8px}
+.day-card.today{border:2px solid #111;padding:18px;opacity:1;box-shadow:0 5px 18px rgba(0,0,0,.06)}
+.kicker{font-size:13px;letter-spacing:.08em;color:#777;text-transform:uppercase}
+.day-date{font-size:15px;margin:7px 0 17px}
+.names{display:flex;flex-wrap:wrap;gap:8px}
+.name{padding:9px 11px;background:#f0f1f3;border-radius:10px;font-weight:650}
+.today .name{background:#111;color:#fff}
+.count{margin-top:14px;color:#777;font-size:13px}
+.schedule{background:#fff;border:1px solid #ddd;border-radius:18px;overflow:hidden}
+.schedule-head{padding:18px 20px;border-bottom:1px solid #ddd}
+.schedule-head h2{margin:0 0 5px}
+.schedule-head p{margin:0;color:#777;font-size:13px}.auto-date{color:#8a8a8a}
+.scroll{overflow:auto}
+table{border-collapse:separate;border-spacing:0;min-width:1080px;width:100%}
+th,td{height:42px;padding:0 7px;text-align:center;border-right:1px solid #e1e3e7;border-bottom:1px solid #e1e3e7;font-size:13px}
+th{background:#fafafa;position:sticky;top:0;z-index:2}
+th.day-head{min-width:34px;padding:4px 3px;line-height:1.05;background:#f1f7f2;color:#506b57}
+th.day-head.weekend-head{background:#fbf0f0;color:#8a5555}
+th.day-head .weekday{display:block;font-size:9px;color:inherit;font-weight:650;margin-top:3px;text-transform:uppercase}
+th.day-head.weekend-head .weekday{color:inherit}
+th.day-head.current-day-head{box-shadow:inset 0 -3px 0 #111;font-weight:800}
+
+th:first-child,td:first-child{position:sticky;left:0;z-index:3;background:#fff;text-align:left;min-width:145px;padding-left:14px;font-weight:650}
+th:first-child{z-index:4;background:#fafafa}
+td.work{background:#f0f7f1;font-weight:750}
+td.off{background:#fafafa;color:#aaa}
+td.vac{background:#fff0fb;color:#a13b91;font-weight:700}
+td.today-cell{box-shadow:inset 0 0 0 2px #111}
+.note{padding:13px 18px;color:#777;font-size:12px}
+@media(max-width:800px){
+ .wrap{padding:14px}
+ h1{font-size:24px}
+ .days{grid-template-columns:1fr}
+ .day-card.today{order:0}
+}
+
+.group-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#777;margin:14px 0 7px}
+.schedule-group td{height:34px;background:#fafafa!important;border-top:2px solid #ddd;color:#777;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;text-align:left!important;padding-left:14px!important}
+
+/* v8: statistics stay at the far right of the schedule */
+th.stat-head,td.stat{min-width:78px;width:78px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<div>
+<h1>Триал-Спорт — график работы</h1>
+<div class="date"></div>
+</div>
+<button onclick="location.reload()" type="button">Обновить</button>
+</header>
+<section class="days">
+<article class="day-card side">
+<div class="kicker">Вчера</div>
+<div class="day-date"></div>
+<div class="group-label">Менеджеры торгового зала</div>
+<div class="names"></div>
+<div class="group-label">Кассиры</div>
+<div class="names"></div>
+<div class="count"></div>
+</article>
+<article class="day-card today">
+<div class="kicker">Сегодня</div>
+<div class="day-date"></div>
+<div class="group-label">Менеджеры торгового зала</div>
+<div class="names"></div>
+<div class="group-label">Кассиры</div>
+<div class="names"></div>
+<div class="count"></div>
+</article>
+<article class="day-card side">
+<div class="kicker">Завтра</div>
+<div class="day-date"></div>
+<div class="group-label">Менеджеры торгового зала</div>
+<div class="names"></div>
+<div class="group-label">Кассиры</div>
+<div class="names"></div>
+<div class="count"></div>
+</article>
+</section>
+<section class="schedule">
+<div class="schedule-head">
+<h2>График — октябрь 2026</h2>
+<p>Р — работа · В — выходной · О — отпуск · <span class="auto-date">Дата и блоки определяются автоматически по дате устройства</span></p>
+</div>
+<div class="scroll">
+<table>
+<thead><tr><th>Сотрудник</th><th class="day-head weekday-head"><span>1</span><span class="weekday">Чт</span></th><th class="day-head weekday-head"><span>2</span><span class="weekday">Пт</span></th><th class="day-head weekend-head"><span>3</span><span class="weekday">Сб</span></th><th class="day-head weekend-head"><span>4</span><span class="weekday">Вс</span></th><th class="day-head weekday-head"><span>5</span><span class="weekday">Пн</span></th><th class="day-head weekday-head"><span>6</span><span class="weekday">Вт</span></th><th class="day-head weekday-head"><span>7</span><span class="weekday">Ср</span></th><th class="day-head weekday-head"><span>8</span><span class="weekday">Чт</span></th><th class="day-head weekday-head"><span>9</span><span class="weekday">Пт</span></th><th class="day-head weekend-head"><span>10</span><span class="weekday">Сб</span></th><th class="day-head weekend-head"><span>11</span><span class="weekday">Вс</span></th><th class="day-head weekday-head"><span>12</span><span class="weekday">Пн</span></th><th class="day-head weekday-head"><span>13</span><span class="weekday">Вт</span></th><th class="day-head weekday-head"><span>14</span><span class="weekday">Ср</span></th><th class="day-head weekday-head"><span>15</span><span class="weekday">Чт</span></th><th class="day-head weekday-head"><span>16</span><span class="weekday">Пт</span></th><th class="day-head weekend-head"><span>17</span><span class="weekday">Сб</span></th><th class="day-head weekend-head"><span>18</span><span class="weekday">Вс</span></th><th class="day-head weekday-head"><span>19</span><span class="weekday">Пн</span></th><th class="day-head weekday-head"><span>20</span><span class="weekday">Вт</span></th><th class="day-head weekday-head"><span>21</span><span class="weekday">Ср</span></th><th class="day-head weekday-head"><span>22</span><span class="weekday">Чт</span></th><th class="day-head weekday-head"><span>23</span><span class="weekday">Пт</span></th><th class="day-head weekend-head"><span>24</span><span class="weekday">Сб</span></th><th class="day-head weekend-head"><span>25</span><span class="weekday">Вс</span></th><th class="day-head weekday-head"><span>26</span><span class="weekday">Пн</span></th><th class="day-head weekday-head"><span>27</span><span class="weekday">Вт</span></th><th class="day-head weekday-head"><span>28</span><span class="weekday">Ср</span></th><th class="day-head weekday-head"><span>29</span><span class="weekday">Чт</span></th><th class="day-head weekday-head"><span>30</span><span class="weekday">Пт</span></th><th class="day-head weekend-head"><span>31</span><span class="weekday">Сб</span></th><th class="stat-head">Рабочие<br/>дни</th><th class="stat-head">Рабочие<br/>часы</th></tr></thead>
+<tbody><tr class="schedule-group"><td colspan="34">Менеджеры торгового зала</td></tr><tr><td class="person-cell">Борзаков А.А.</td><td class="work today-cell">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="stat">19</td><td class="stat">209</td></tr><tr><td class="person-cell">Клепиков С.С.</td><td class="off today-cell">В</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="vac">О</td><td class="vac">О</td><td class="vac">О</td><td class="vac">О</td><td class="vac">О</td><td class="vac">О</td><td class="vac">О</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="stat">16</td><td class="stat">176</td></tr><tr><td class="person-cell">Ковалёв С.В.</td><td class="work today-cell">Р</td><td class="off">В</td><td class="off">В</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="stat">19</td><td class="stat">209</td></tr><tr><td class="person-cell">Колядин В.М.</td><td class="work today-cell">Р</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="stat">19</td><td class="stat">209</td></tr><tr><td class="person-cell">Сергатских Д.И.</td><td class="off today-cell">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="stat">20</td><td class="stat">220</td></tr><tr class="schedule-group"><td colspan="34">Кассиры</td></tr><tr><td class="person-cell">Золотых О.А.</td><td class="work today-cell">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="stat">15</td><td class="stat">165</td></tr><tr><td class="person-cell">Малышко О.В.</td><td class="off today-cell">В</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="off">В</td><td class="off">В</td><td class="work">Р</td><td class="work">Р</td><td class="stat">16</td><td class="stat">176</td></tr></tbody>
+</table>
+</div>
+<div class="note">График можно прокручивать вправо и влево на телефоне.</div>
+</section>
+</div>
+
+<script>
+(function(){
+  const MONTH=9, YEAR=2026; // October 2026, JS months are 0-based
+  const weekday=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+  const weekdayShort=['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+  const monthNames=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+
+  const table=document.querySelector('table');
+  const rows=[...table.querySelectorAll('tbody tr')];
+  let group='';
+  const people=[];
+  rows.forEach(row=>{
+    if(row.classList.contains('schedule-group')){
+      group=row.textContent.trim();
+      return;
+    }
+    const cells=[...row.children];
+    if(!cells.length) return;
+    const name=cells[0].textContent.trim();
+    const days=cells.slice(1,32).map(td=>td.textContent.trim());
+    people.push({name,group,days});
+  });
+
+  // 30 сентября не входит в октябрьскую таблицу — это данные из исходного графика.
+  const september30={
+    'Борзаков А.А.':'Р',
+    'Ковалёв С.В.':'Р',
+    'Сергатских Д.И.':'Р',
+    'Золотых О.А.':'Р'
+  };
+
+  function peopleFor(date){
+    const inOctober=date.getFullYear()===YEAR && date.getMonth()===MONTH;
+    if(inOctober){
+      const d=date.getDate();
+      return people.filter(p=>p.days[d-1]==='Р');
+    }
+    if(date.getFullYear()===2026 && date.getMonth()===8 && date.getDate()===30){
+      return people.filter(p=>september30[p.name]==='Р');
+    }
+    return [];
+  }
+
+  function formatDate(date){
+    return `${date.getDate()} ${monthNames[date.getMonth()]} ${date.getFullYear()} · ${weekday[date.getDay()]}`;
+  }
+
+  function setCard(card, label, date){
+    const kicker=card.querySelector('.kicker');
+    const dateEl=card.querySelector('.day-date');
+    const groups=card.querySelectorAll('.group-label');
+    const namesBlocks=card.querySelectorAll('.names');
+    const count=card.querySelector('.count');
+    const workers=peopleFor(date);
+    const managers=workers.filter(p=>p.group==='Менеджеры торгового зала');
+    const cashiers=workers.filter(p=>p.group==='Кассиры');
+
+    kicker.textContent=label;
+    dateEl.textContent=formatDate(date);
+
+    // Keep the two groups, but hide an empty group.
+    const data=[[groups[0],namesBlocks[0],managers],[groups[1],namesBlocks[1],cashiers]];
+    data.forEach(([g,names,list])=>{
+      g.style.display=list.length?'block':'none';
+      names.style.display=list.length?'flex':'none';
+      names.innerHTML=list.map(p=>`<span class="name">${p.name}</span>`).join('');
+    });
+    count.textContent=`${workers.length} ${workers.length===1?'человек':'человека'}`;
+  }
+
+  // Всегда берём дату устройства в момент открытия страницы.
+  // Никакой даты не хранится в HTML — при следующем открытии всё пересчитается заново.
+  function getToday(){
+    const now=new Date();
+    return new Date(now.getFullYear(),now.getMonth(),now.getDate(),12,0,0,0);
+  }
+
+  const today=getToday();
+  const yesterday=new Date(today); yesterday.setDate(today.getDate()-1);
+  const tomorrow=new Date(today); tomorrow.setDate(today.getDate()+1);
+
+  const cards=[...document.querySelectorAll('.day-card')];
+  setCard(cards[0],'Вчера',yesterday);
+  setCard(cards[1],'Сегодня',today);
+  setCard(cards[2],'Завтра',tomorrow);
+
+  // Header date follows the actual current date.
+  const headerDate=document.querySelector('header .date');
+  headerDate.textContent=formatDate(today);
+
+  // Highlight the actual current day in the October table.
+  table.querySelectorAll('.today-cell').forEach(td=>td.classList.remove('today-cell'));
+  table.querySelectorAll('thead .day-head').forEach(th=>th.classList.remove('current-day-head'));
+  if(today.getFullYear()===YEAR && today.getMonth()===MONTH){
+    const day=today.getDate();
+    const header=table.querySelectorAll('thead .day-head')[day-1];
+    if(header) header.classList.add('current-day-head');
+    people.forEach(p=>{
+      const row=[...table.querySelectorAll('tbody tr')].find(r=>r.children[0]?.textContent.trim()===p.name);
+      if(row && row.children[day]) row.children[day].classList.add('today-cell');
+    });
+  }
+
+  // Make the header's weekday labels always match the calendar.
+  table.querySelectorAll('thead .day-head').forEach((th,i)=>{
+    const d=new Date(YEAR,MONTH,i+1);
+    const span=th.querySelector('.weekday');
+    if(span) span.textContent=weekdayShort[d.getDay()];
+    th.classList.toggle('weekend-head',d.getDay()===0 || d.getDay()===6);
+    th.classList.toggle('weekday-head',d.getDay()!==0 && d.getDay()!==6);
+  });
+})();
+</script>
+</body>
+</html>
