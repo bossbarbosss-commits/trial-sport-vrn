@@ -29,6 +29,9 @@
   .card-date{font-size:15px;margin:5px 0 15px}
   .names{display:flex;flex-wrap:wrap;gap:8px}
   .person{background:#f1f2f4;border-radius:10px;padding:9px 11px;font-weight:600;font-size:15px}
+  .role-group{width:100%;display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+  .role-title{width:100%;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:8px 0 2px}
+  .group-row td{background:#f4f5f7!important;color:#555;font-weight:700;text-align:left;padding-left:14px}
   .today .person{font-size:16px;background:#111;color:#fff}
   .empty{color:var(--muted);font-size:14px}
   .schedule-card{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden}
@@ -57,7 +60,6 @@
     h1{font-size:23px}
     .people{grid-template-columns:1fr;gap:10px}
     .card{min-height:auto}
-    .card.today{order:-1}
     .schedule-head{align-items:flex-start;gap:10px;flex-direction:column}
   }
 </style>
@@ -71,8 +73,6 @@
     </div>
     <button class="today-btn" onclick="goToday()">Сегодня</button>
   </header>
-
-  <section class="month-picker"><label for="monthSelect">МЕСЯЦ ГРАФИКА</label><select id="monthSelect" onchange="changeMonth(this.value)"><option value="2026-10">Октябрь 2026</option><option value="2026-11" selected>Ноябрь 2026</option></select></section>
 
   <section class="people">
     <div class="card">
@@ -92,7 +92,9 @@
     </div>
   </section>
 
-  <section class="schedule-card">
+  <section class="month-picker"><label for="monthSelect">МЕСЯЦ ГРАФИКА</label><select id="monthSelect" onchange="changeMonth(this.value)"><option value="2026-10">Октябрь 2026</option><option value="2026-11" selected>Ноябрь 2026</option></select></section>
+
+    <section class="schedule-card">
     <div class="schedule-head">
       <h2 id="monthTitle">График</h2>
       <div class="hint">Р — работа · В — выходной · О — отпуск</div>
@@ -136,6 +138,10 @@ const schedules = {
 }
 };
 const monthNames = {"2026-10":"Октябрь 2026","2026-11":"Ноябрь 2026"};
+const roleGroups = [
+  { title: "Менеджеры торгового зала", names: ["Борзаков А.А.","Клепиков С.С.","Ковалёв С.В.","Колядин В.М.","Сергацких Д.И."] },
+  { title: "Кассиры", names: ["Золотых О.А.","Малышко О.В."] }
+];
 let selectedMonth = "2026-11";
 let schedule = loadSchedule(selectedMonth);
 
@@ -155,17 +161,32 @@ function loadSchedule(key) {
 function normalize(s, days) { return (s || "").padEnd(days, "В").slice(0, days); }
 function monthParts(key) { const [y,m] = key.split("-").map(Number); return {year:y, month:m-1}; }
 function daysCount(key) { const p=monthParts(key); return new Date(p.year,p.month+1,0).getDate(); }
-function getStatus(name, day) { return normalize(schedule[name], daysCount(selectedMonth))[day-1] || "В"; }
-function workers(day) { return Object.keys(schedule).filter(n => getStatus(n,day)==="Р"); }
-function fmt(day) {
-  const p=monthParts(selectedMonth);
-  return new Date(p.year,p.month,day).toLocaleDateString("ru-RU",{day:"numeric",month:"long"});
+function scheduleForDate(date) {
+  const key = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}`;
+  if (!schedules[key]) return null;
+  return loadSchedule(key);
 }
-function renderPeople(id, day) {
+function workersForDate(date) {
+  const key = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}`;
+  const data = scheduleForDate(date);
+  if (!data) return null;
+  const day = date.getDate();
+  const days = daysCount(key);
+  return Object.keys(data).filter(name => normalize(data[name],days)[day-1] === "Р");
+}
+function fmtDate(date) {
+  return date.toLocaleDateString("ru-RU",{day:"numeric",month:"long"});
+}
+function renderPeople(id, date) {
   const el=document.getElementById(id);
-  if(day<1 || day>daysCount(selectedMonth)) { el.innerHTML='<div class="empty">Нет данных</div>'; return; }
-  const list=workers(day);
-  el.innerHTML=list.length ? list.map(n=>`<div class="person">${n}</div>`).join("") : '<div class="empty">Никого нет</div>';
+  const list=workersForDate(date);
+  if (list === null) { el.innerHTML='<div class="empty">Нет данных</div>'; return; }
+  if (!list.length) { el.innerHTML='<div class="empty">Никого нет</div>'; return; }
+  el.innerHTML = roleGroups.map(group => {
+    const names = group.names.filter(name => list.includes(name));
+    if (!names.length) return "";
+    return `<div class="role-group"><div class="role-title">${group.title}</div>${names.map(n=>`<div class="person">${n}</div>`).join("")}</div>`;
+  }).join("");
 }
 function render() {
   const now=new Date();
@@ -173,28 +194,36 @@ function render() {
   const isCurrentMonth=now.getFullYear()===p.year && now.getMonth()===p.month;
   const day=isCurrentMonth ? now.getDate() : 1;
   const days=daysCount(selectedMonth);
+  const referenceDate = new Date(p.year,p.month,day);
+  const yesterday = new Date(p.year,p.month,day-1);
+  const tomorrow = new Date(p.year,p.month,day+1);
 
   document.getElementById("currentDate").textContent = now.toLocaleDateString("ru-RU",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
-  document.getElementById("yesterdayDate").textContent=fmt(day-1);
-  document.getElementById("todayDate").textContent=fmt(day);
-  document.getElementById("tomorrowDate").textContent=fmt(day+1);
-  renderPeople("yesterday",day-1);
-  renderPeople("today",day);
-  renderPeople("tomorrow",day+1);
+  document.getElementById("yesterdayDate").textContent=fmtDate(yesterday);
+  document.getElementById("todayDate").textContent=fmtDate(referenceDate);
+  document.getElementById("tomorrowDate").textContent=fmtDate(tomorrow);
+  renderPeople("yesterday",yesterday);
+  renderPeople("today",referenceDate);
+  renderPeople("tomorrow",tomorrow);
 
   document.getElementById("monthTitle").textContent = monthNames[selectedMonth];
   let html="<thead><tr><th>Сотрудник</th>";
   for(let d=1;d<=days;d++) html+=`<th>${d}</th>`;
   html+="</tr></thead><tbody>";
-  for(const name of Object.keys(schedule)) {
-    html+=`<tr><td>${name}</td>`;
-    for(let d=1;d<=days;d++) {
-      const s=getStatus(name,d);
-      const cls=s==="Р"?"work":s==="О"?"vac":"off";
-      const current=d===day && isCurrentMonth ? " current":"";
-      html+=`<td class="${cls}${current}">${s}</td>`;
+  for(const group of roleGroups) {
+    const groupNames = group.names.filter(name => Object.prototype.hasOwnProperty.call(schedule,name));
+    if (!groupNames.length) continue;
+    html+=`<tr class="group-row"><td colspan="${days+1}">${group.title}</td></tr>`;
+    for(const name of groupNames) {
+      html+=`<tr><td>${name}</td>`;
+      for(let d=1;d<=days;d++) {
+        const s=getStatus(name,d);
+        const cls=s==="Р"?"work":s==="О"?"vac":"off";
+        const current=d===day && isCurrentMonth ? " current":"";
+        html+=`<td class="${cls}${current}">${s}</td>`;
+      }
+      html+="</tr>";
     }
-    html+="</tr>";
   }
   html+="</tbody>";
   document.getElementById("scheduleTable").innerHTML=html;
