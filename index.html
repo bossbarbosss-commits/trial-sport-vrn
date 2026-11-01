@@ -33,18 +33,22 @@
   .role-title{width:100%;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:8px 0 2px}
   .group-row td{background:#f4f5f7!important;color:#555;font-weight:700;text-align:left;padding-left:14px}
   .today .person{font-size:16px;background:#111;color:#fff}
-  .card:not(.today) .person{font-size:13px;padding:7px 9px;background:#f5f5f6;color:#555;border-radius:9px}
-  .card:not(.today) .role-title{font-size:11px;margin-top:5px}
+  .card:not(.today){padding:12px;min-height:0;background:#fff;box-shadow:none}
+  .card:not(.today) .card-title{font-size:11px;letter-spacing:.07em;color:#92969c}
+  .card:not(.today) .card-date{font-size:14px;margin:4px 0 9px;color:#45484d}
+  .card:not(.today) .role-group{gap:6px;margin-bottom:5px}
+  .card:not(.today) .person{font-size:12px;padding:6px 8px;background:#f3f4f5;color:#666;border-radius:8px;font-weight:500}
+  .card:not(.today) .role-title{font-size:10px;margin:4px 0 1px;color:#92969c}
   .empty{color:var(--muted);font-size:14px}
   .schedule-card{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden}
   .schedule-head{display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border-bottom:1px solid var(--line)}
   .schedule-head h2{margin:0;font-size:19px}
   .hint{font-size:13px;color:var(--muted)}
   .table-scroll{overflow:auto}
-  table{border-collapse:separate;border-spacing:0;table-layout:fixed;width:100%;min-width:1100px}
+  table{border-collapse:separate;border-spacing:0;table-layout:fixed;width:100%;min-width:0}
   th,td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);height:42px;text-align:center;font-size:13px}
   th{background:#fafafa;font-weight:600;color:#555;position:sticky;top:0;z-index:2}
-  th:first-child,td:first-child{position:sticky;left:0;z-index:3;background:#fff;text-align:left;padding:0 8px 0 10px;width:150px;min-width:150px;max-width:150px;white-space:nowrap;font-size:12px;font-weight:600;box-sizing:border-box}
+  th:first-child,td:first-child{position:sticky;left:0;z-index:3;background:#fff;text-align:left;padding:0 6px 0 9px;width:132px;min-width:132px;max-width:132px;white-space:normal;overflow-wrap:anywhere;font-size:11px;line-height:1.15;font-weight:600;box-sizing:border-box}
   th:first-child{z-index:4;background:#fafafa}
   td.work{background:var(--work);font-weight:700}
   td.off{background:var(--off);color:#999}
@@ -191,26 +195,29 @@ function renderPeople(id, date) {
     return `<div class="role-group"><div class="role-title">${group.title}</div>${names.map(n=>`<div class="person">${n}</div>`).join("")}</div>`;
   }).join("");
 }
-function render() {
+function render(updateDailyCards=true) {
   const now=new Date();
   const p=monthParts(selectedMonth);
   const isCurrentMonth=now.getFullYear()===p.year && now.getMonth()===p.month;
   const day=isCurrentMonth ? now.getDate() : 1;
   const days=daysCount(selectedMonth);
-  const yesterday = new Date(now.getFullYear(),now.getMonth(),now.getDate()-1);
-  const today = new Date(now.getFullYear(),now.getMonth(),now.getDate());
-  const tomorrow = new Date(now.getFullYear(),now.getMonth(),now.getDate()+1);
-
-  document.getElementById("currentDate").textContent = now.toLocaleDateString("ru-RU",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
-  document.getElementById("yesterdayDate").textContent=fmtDate(yesterday);
-  document.getElementById("todayDate").textContent=fmtDate(today);
-  document.getElementById("tomorrowDate").textContent=fmtDate(tomorrow);
-  renderPeople("yesterday",yesterday);
-  renderPeople("today",today);
-  renderPeople("tomorrow",tomorrow);
+  if(updateDailyCards) {
+    const yesterday = new Date(now.getFullYear(),now.getMonth(),now.getDate()-1);
+    const today = new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    const tomorrow = new Date(now.getFullYear(),now.getMonth(),now.getDate()+1);
+    document.getElementById("currentDate").textContent = now.toLocaleDateString("ru-RU",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+    document.getElementById("yesterdayDate").textContent=fmtDate(yesterday);
+    document.getElementById("todayDate").textContent=fmtDate(today);
+    document.getElementById("tomorrowDate").textContent=fmtDate(tomorrow);
+    renderPeople("yesterday",yesterday);
+    renderPeople("today",today);
+    renderPeople("tomorrow",tomorrow);
+  }
 
   document.getElementById("monthTitle").textContent = monthNames[selectedMonth];
-  let html="<thead><tr><th>Сотрудник</th>";
+  let html=`<colgroup><col style="width:132px">`;
+  for(let d=1;d<=days;d++) html+='<col style="width:42px">';
+  html+="</colgroup><thead><tr><th>Сотрудник</th>";
   for(let d=1;d<=days;d++) html+=`<th>${d}</th>`;
   html+="</tr></thead><tbody>";
   for(const group of roleGroups) {
@@ -230,7 +237,8 @@ function render() {
   }
   html+="</tbody>";
   document.getElementById("scheduleTable").innerHTML=html;
-  document.getElementById("scheduleTable").style.minWidth = `${150 + days*42}px`;
+  document.getElementById("scheduleTable").style.width = `${132 + days*42}px`;
+  document.getElementById("scheduleTable").style.minWidth = `${132 + days*42}px`;
   document.getElementById("dataBox").value=Object.entries(schedule).map(([n,v])=>`${n}: ${v}`).join("\\n");
   document.getElementById("monthSelect").value=selectedMonth;
 }
@@ -238,7 +246,7 @@ function changeMonth(key) {
   if(!schedules[key]) return;
   selectedMonth=key;
   schedule=loadSchedule(key);
-  render();
+  render(false);
 }
 function saveData() {
   const lines=document.getElementById("dataBox").value.split("\\n");
