@@ -48,12 +48,17 @@
   table{border-collapse:separate;border-spacing:0;table-layout:fixed;width:100%;min-width:0}
   th,td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);height:42px;text-align:center;font-size:13px}
   th{background:#fafafa;font-weight:600;color:#555;position:sticky;top:0;z-index:2}
+  th.weekday{font-size:10px;line-height:1.1;height:24px;padding-top:5px;color:#858990}
+  th.weekday.weekend{color:#b07878}
+  th.day-number{height:30px;font-size:12px}
   th:first-child,td:first-child{position:sticky;left:0;z-index:3;background:#fff;text-align:left;padding:0 6px 0 9px;width:132px;min-width:132px;max-width:132px;white-space:normal;overflow-wrap:anywhere;font-size:11px;line-height:1.15;font-weight:600;box-sizing:border-box}
   th:first-child{z-index:4;background:#fafafa}
   td.work{background:var(--work);font-weight:700}
   td.off{background:var(--off);color:#999}
   td.vac{background:var(--vac);color:#a23b91;font-weight:600}
   td.current{outline:2px solid #111;outline-offset:-2px}
+  th.total-head{min-width:58px}
+  td.total-cell{background:#f5f6f8;font-weight:700;font-variant-numeric:tabular-nums}
   tr:last-child td{border-bottom:0}
   .legend{padding:14px 18px;color:var(--muted);font-size:12px}
   .admin{margin-top:20px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px}
@@ -217,13 +222,21 @@ function render(updateDailyCards=true) {
   document.getElementById("monthTitle").textContent = monthNames[selectedMonth];
   let html=`<colgroup><col style="width:132px">`;
   for(let d=1;d<=days;d++) html+='<col style="width:42px">';
-  html+="</colgroup><thead><tr><th>Сотрудник</th>";
-  for(let d=1;d<=days;d++) html+=`<th>${d}</th>`;
+  html+='<col style="width:58px"><col style="width:62px">';
+  html+="</colgroup><thead><tr><th rowspan='2'>Сотрудник</th>";
+  const weekdays=["Вс","Пн","Вт","Ср","Чт","Пт","Сб"];
+  for(let d=1;d<=days;d++) {
+    const weekday=new Date(p.year,p.month,d).getDay();
+    const weekend=(weekday===0 || weekday===6) ? " weekend" : "";
+    html+=`<th class="weekday${weekend}">${weekdays[weekday]}</th>`;
+  }
+  html+="<th class='total-head' rowspan='2'>Дней</th><th class='total-head' rowspan='2'>Часов</th></tr><tr>";
+  for(let d=1;d<=days;d++) html+=`<th class="day-number">${d}</th>`;
   html+="</tr></thead><tbody>";
   for(const group of roleGroups) {
     const groupNames = group.names.filter(name => Object.prototype.hasOwnProperty.call(schedule,name));
     if (!groupNames.length) continue;
-    html+=`<tr class="group-row"><td colspan="${days+1}">${group.title}</td></tr>`;
+    html+=`<tr class="group-row"><td colspan="${days+3}">${group.title}</td></tr>`;
     for(const name of groupNames) {
       html+=`<tr><td>${name}</td>`;
       for(let d=1;d<=days;d++) {
@@ -232,13 +245,15 @@ function render(updateDailyCards=true) {
         const current=d===day && isCurrentMonth ? " current":"";
         html+=`<td class="${cls}${current}">${s}</td>`;
       }
+      const workDays=Array.from({length:days},(_,i)=>normalize(schedule[name],days)[i]).filter(v=>v==="Р").length;
+      html+=`<td class="total-cell">${workDays}</td><td class="total-cell">${workDays*11}</td>`;
       html+="</tr>";
     }
   }
   html+="</tbody>";
   document.getElementById("scheduleTable").innerHTML=html;
-  document.getElementById("scheduleTable").style.width = `${132 + days*42}px`;
-  document.getElementById("scheduleTable").style.minWidth = `${132 + days*42}px`;
+  document.getElementById("scheduleTable").style.width = `${252 + days*42}px`;
+  document.getElementById("scheduleTable").style.minWidth = `${252 + days*42}px`;
   document.getElementById("dataBox").value=Object.entries(schedule).map(([n,v])=>`${n}: ${v}`).join("\\n");
   document.getElementById("monthSelect").value=selectedMonth;
 }
