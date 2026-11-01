@@ -33,16 +33,18 @@
   .role-title{width:100%;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:8px 0 2px}
   .group-row td{background:#f4f5f7!important;color:#555;font-weight:700;text-align:left;padding-left:14px}
   .today .person{font-size:16px;background:#111;color:#fff}
+  .card:not(.today) .person{font-size:13px;padding:7px 9px;background:#f5f5f6;color:#555;border-radius:9px}
+  .card:not(.today) .role-title{font-size:11px;margin-top:5px}
   .empty{color:var(--muted);font-size:14px}
   .schedule-card{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden}
   .schedule-head{display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border-bottom:1px solid var(--line)}
   .schedule-head h2{margin:0;font-size:19px}
   .hint{font-size:13px;color:var(--muted)}
   .table-scroll{overflow:auto}
-  table{border-collapse:separate;border-spacing:0;min-width:1100px;width:100%}
+  table{border-collapse:separate;border-spacing:0;table-layout:fixed;width:100%;min-width:1100px}
   th,td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);height:42px;text-align:center;font-size:13px}
   th{background:#fafafa;font-weight:600;color:#555;position:sticky;top:0;z-index:2}
-  th:first-child,td:first-child{position:sticky;left:0;z-index:3;background:#fff;text-align:left;padding-left:14px;min-width:145px;font-weight:600}
+  th:first-child,td:first-child{position:sticky;left:0;z-index:3;background:#fff;text-align:left;padding:0 8px 0 10px;width:150px;min-width:150px;max-width:150px;white-space:nowrap;font-size:12px;font-weight:600;box-sizing:border-box}
   th:first-child{z-index:4;background:#fafafa}
   td.work{background:var(--work);font-weight:700}
   td.off{background:var(--off);color:#999}
@@ -195,16 +197,16 @@ function render() {
   const isCurrentMonth=now.getFullYear()===p.year && now.getMonth()===p.month;
   const day=isCurrentMonth ? now.getDate() : 1;
   const days=daysCount(selectedMonth);
-  const referenceDate = new Date(p.year,p.month,day);
-  const yesterday = new Date(p.year,p.month,day-1);
-  const tomorrow = new Date(p.year,p.month,day+1);
+  const yesterday = new Date(now.getFullYear(),now.getMonth(),now.getDate()-1);
+  const today = new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const tomorrow = new Date(now.getFullYear(),now.getMonth(),now.getDate()+1);
 
   document.getElementById("currentDate").textContent = now.toLocaleDateString("ru-RU",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
   document.getElementById("yesterdayDate").textContent=fmtDate(yesterday);
-  document.getElementById("todayDate").textContent=fmtDate(referenceDate);
+  document.getElementById("todayDate").textContent=fmtDate(today);
   document.getElementById("tomorrowDate").textContent=fmtDate(tomorrow);
   renderPeople("yesterday",yesterday);
-  renderPeople("today",referenceDate);
+  renderPeople("today",today);
   renderPeople("tomorrow",tomorrow);
 
   document.getElementById("monthTitle").textContent = monthNames[selectedMonth];
@@ -228,6 +230,7 @@ function render() {
   }
   html+="</tbody>";
   document.getElementById("scheduleTable").innerHTML=html;
+  document.getElementById("scheduleTable").style.minWidth = `${150 + days*42}px`;
   document.getElementById("dataBox").value=Object.entries(schedule).map(([n,v])=>`${n}: ${v}`).join("\\n");
   document.getElementById("monthSelect").value=selectedMonth;
 }
