@@ -139,7 +139,7 @@ const schedules = {
 };
 const monthNames = {"2026-10":"Октябрь 2026","2026-11":"Ноябрь 2026"};
 const roleGroups = [
-  { title: "Менеджеры торгового зала", names: ["Борзаков А.А.","Клепиков С.С.","Ковалёв С.В.","Колядин В.М.","Сергацких Д.И."] },
+  { title: "Менеджеры торгового зала", names: ["Борзаков А.А.","Клепиков С.С.","Ковалёв С.В.","Колядин В.М.","Сергацких Д.И.","Сергатских Д.И."] },
   { title: "Кассиры", names: ["Золотых О.А.","Малышко О.В."] }
 ];
 let selectedMonth = "2026-11";
@@ -161,6 +161,7 @@ function loadSchedule(key) {
 function normalize(s, days) { return (s || "").padEnd(days, "В").slice(0, days); }
 function monthParts(key) { const [y,m] = key.split("-").map(Number); return {year:y, month:m-1}; }
 function daysCount(key) { const p=monthParts(key); return new Date(p.year,p.month+1,0).getDate(); }
+function getStatus(name, day) { return normalize(schedule[name], daysCount(selectedMonth))[day-1] || "В"; }
 function scheduleForDate(date) {
   const key = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}`;
   if (!schedules[key]) return null;
